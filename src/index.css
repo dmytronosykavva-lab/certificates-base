@@ -1,0 +1,17 @@
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&family=Roboto:wght@500;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #123274;
+  --color-accent: #f5c95e;
+  --color-danger: #9d0e1c;
+  --font-sans: 'Open Sans', sans-serif;
+  --font-heading: 'Roboto', sans-serif;
+  --radius-karazin: 7px;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #ffffff;
+  color: #333333;
+}
