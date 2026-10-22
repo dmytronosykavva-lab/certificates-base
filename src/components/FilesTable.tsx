@@ -1,4 +1,4 @@
-import { memo, useMemo } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import type { FC, ReactNode } from 'react';
 import type { SearchResult } from '../lib/DataEngine';
 
@@ -299,19 +299,54 @@ const CertificateCard: FC<CertificateCardProps> = memo(({ item, searchTerm }) =>
 
 CertificateCard.displayName = 'CertificateCard';
 
+/** Кількість карток, що рендеряться за один раз. */
+const PAGE_SIZE = 30;
+
+/**
+ * Кеш розібраних рядків. Ключ — об'єкт SearchResult, тому при натисканні
+ * "Показати ще" вже показані картки отримують ті самі об'єкти item,
+ * і React.memo на CertificateCard не перемальовує їх повторно.
+ */
+const parsedCache = new WeakMap<SearchResult, ParsedCertificate | null>();
+
+const getParsed = (item: SearchResult, index: number): ParsedCertificate | null => {
+  if (parsedCache.has(item)) return parsedCache.get(item) ?? null;
+  const parsed = parseCertificateRow(item, index);
+  parsedCache.set(item, parsed);
+  return parsed;
+};
+
 interface FilesTableProps {
   results: SearchResult[];
   searchTerm: string;
 }
 
+/**
+ * Таблиця результатів. Батьківський компонент передає їй `key`, що залежить
+ * від запиту й фільтрів, — тому лічильник видимих карток автоматично
+ * скидається до PAGE_SIZE при кожному новому пошуку.
+ */
 export const FilesTable: FC<FilesTableProps> = memo(({ results, searchTerm }) => {
-  const validItems = useMemo(() => {
-    return results
-      .map((item, idx) => parseCertificateRow(item, idx))
-      .filter((item): item is ParsedCertificate => item !== null);
-  }, [results]);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
-  if (validItems.length === 0) {
+  // Ліниво розбираємо ЛИШЕ ту кількість рядків, яку реально показуємо,
+  // а не весь масив збігів (якого може бути кілька тисяч).
+  const { items, hasMore } = useMemo(() => {
+    const collected: ParsedCertificate[] = [];
+    let cursor = 0;
+    while (cursor < results.length && collected.length < visibleCount) {
+      const parsed = getParsed(results[cursor], cursor);
+      if (parsed) collected.push(parsed);
+      cursor++;
+    }
+    return { items: collected, hasMore: cursor < results.length };
+  }, [results, visibleCount]);
+
+  const handleShowMore = useCallback(() => {
+    setVisibleCount((count) => count + PAGE_SIZE);
+  }, []);
+
+  if (items.length === 0) {
     return (
       <div className="text-center py-12 px-4 bg-white/95 backdrop-blur-xs border border-slate-200 rounded-lg shadow-md transition-all duration-300">
         <p className="text-slate-500 text-base sm:text-lg">За вашим запитом нічого не знайдено.</p>
@@ -321,14 +356,29 @@ export const FilesTable: FC<FilesTableProps> = memo(({ results, searchTerm }) =>
 
   return (
     <div className="w-full h-auto overflow-hidden bg-white/95 backdrop-blur-xs rounded-lg border border-primary/15 shadow-md transition-all duration-300">
-      <div className="px-4 sm:px-6 py-4 text-xs uppercase bg-primary/5 border-b border-primary/15 text-primary font-bold tracking-wider">
-        Збіг у файлі ({validItems.length})
+      <div className="px-4 sm:px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 text-xs uppercase bg-primary/5 border-b border-primary/15 text-primary font-bold tracking-wider">
+        <span>Збіг у файлі ({results.length})</span>
+        {results.length > items.length && (
+          <span className="normal-case font-medium tracking-normal text-slate-500">
+            Показано {items.length} з {results.length}
+          </span>
+        )}
       </div>
 
       <div className="p-4 sm:p-6 flex flex-col gap-4 h-auto">
-        {validItems.map((item) => (
+        {items.map((item) => (
           <CertificateCard key={item.id} item={item} searchTerm={searchTerm} />
         ))}
+
+        {hasMore && (
+          <button
+            type="button"
+            onClick={handleShowMore}
+            className="self-center mt-2 px-6 py-2.5 rounded-lg border border-primary/30 bg-white text-primary text-sm font-semibold shadow-xs hover:bg-primary hover:text-white hover:shadow-md focus:outline-none focus:ring-4 focus:ring-primary/15 transition-all duration-300 cursor-pointer"
+          >
+            Показати ще
+          </button>
+        )}
       </div>
     </div>
   );
