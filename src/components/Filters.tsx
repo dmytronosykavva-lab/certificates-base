@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import type { FC } from 'react';
 import type { FileEntry } from '../types';
 
@@ -10,7 +10,7 @@ interface FiltersProps {
   onDateChange: (value: string) => void;
 }
 
-export const Filters: FC<FiltersProps> = ({
+export const Filters: FC<FiltersProps> = memo(({
   data,
   selectedYear,
   onYearChange,
@@ -85,4 +85,6 @@ export const Filters: FC<FiltersProps> = ({
       </div>
     </div>
   );
-};
+});
+
+Filters.displayName = 'Filters';

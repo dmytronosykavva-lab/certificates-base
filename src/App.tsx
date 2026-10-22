@@ -4,7 +4,11 @@ import { SearchBar } from './components/SearchBar';
 import { Filters } from './components/Filters';
 import { FilesTable } from './components/FilesTable';
 import { dataEngine } from './lib/DataEngine';
+import { useDebounce } from './hooks/useDebounce';
+import type { SearchResult } from './lib/DataEngine';
 import type { FileEntry } from './types';
+
+const EMPTY_RESULTS: SearchResult[] = [];
 
 function App() {
   const [data, setData] = useState<FileEntry[]>([]);
@@ -12,6 +16,8 @@ function App() {
   const [error, setError] = useState<string | null>(null);
 
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchQuery = useDebounce(searchTerm, 350);
+
   const [selectedYear, setSelectedYear] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
 
@@ -55,10 +61,11 @@ function App() {
   }, []);
 
   const searchResults = useMemo(() => {
-    // Re-run search if cache updates (trigger via cacheProgress) or inputs change
-    if (cacheProgress < 0) return []; // Just to use the variable so eslint is happy
-    return dataEngine.search(searchTerm, selectedYear, selectedDate);
-  }, [searchTerm, selectedYear, selectedDate, cacheProgress]);
+    if (cacheProgress < 0) return EMPTY_RESULTS;
+    const trimmed = debouncedSearchQuery.trim();
+    if (!trimmed) return EMPTY_RESULTS;
+    return dataEngine.search(trimmed, selectedYear, selectedDate);
+  }, [debouncedSearchQuery, selectedYear, selectedDate, cacheProgress]);
 
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/40 overflow-hidden">
@@ -176,8 +183,8 @@ function App() {
               />
             </div>
 
-            {searchTerm.trim() !== '' && (
-              <FilesTable results={searchResults} searchTerm={searchTerm} />
+            {debouncedSearchQuery.trim() !== '' && (
+              <FilesTable results={searchResults} searchTerm={debouncedSearchQuery} />
             )}
           </div>
         )}

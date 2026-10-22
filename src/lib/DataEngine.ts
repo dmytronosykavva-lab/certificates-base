@@ -7,9 +7,15 @@ export interface SearchResult {
   matchedRowData?: Record<string, unknown>;
 }
 
+interface CachedRow {
+  raw: Record<string, unknown>;
+  values: string[];
+  searchStr: string;
+}
+
 class DataEngine {
   private files: FileEntry[] = [];
-  private fileCache: Map<string, Record<string, unknown>[]> = new Map();
+  private fileCache: Map<string, CachedRow[]> = new Map();
   public isLoading = false;
   public isLoaded = false;
   private progressCallback?: (progress: number, total: number) => void;
@@ -80,24 +86,35 @@ class DataEngine {
 
                 const rawJson = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { range: headerIndex });
 
-                // Відфільтровуємо заголовні, технічні та порожні рядки
-                const json = rawJson.filter((row) => {
+                // Попередньо індексуємо та фільтруємо рядки один раз під час завантаження
+                const cachedRows: CachedRow[] = [];
+                for (const row of rawJson) {
                   const values = Object.values(row)
                     .map((v) => (v !== null && v !== undefined ? String(v).trim() : ''))
                     .filter(Boolean);
-                  if (values.length === 0) return false;
-                  const rowStr = values.join(' ').toLowerCase();
-                  if (
-                    rowStr.includes('таблиця обліку') &&
-                    (rowStr.includes('сертифікат') || rowStr.includes('документ') || rowStr.includes('свідоцтв'))
-                  ) {
-                    return false;
-                  }
-                  if (rowStr.includes('прізвище, ім') && rowStr.includes('структурного')) return false;
-                  return true;
-                });
+                  if (values.length === 0) continue;
 
-                this.fileCache.set(file.id, json);
+                  const searchStr = values.join(' ').toLowerCase();
+                  if (
+                    searchStr.includes('таблиця обліку') &&
+                    (searchStr.includes('сертифікат') ||
+                      searchStr.includes('документ') ||
+                      searchStr.includes('свідоцтв'))
+                  ) {
+                    continue;
+                  }
+                  if (searchStr.includes('прізвище, ім') && searchStr.includes('структурного')) {
+                    continue;
+                  }
+
+                  cachedRows.push({
+                    raw: row,
+                    values,
+                    searchStr,
+                  });
+                }
+
+                this.fileCache.set(file.id, cachedRows);
               }
             }
           } catch {
@@ -129,26 +146,15 @@ class DataEngine {
 
       const data = this.fileCache.get(file.id);
       if (data) {
-        for (const row of data) {
-          const values = Object.values(row)
-            .map((v) => (v !== null && v !== undefined ? String(v).trim() : ''))
-            .filter(Boolean);
-          if (values.length === 0) continue;
-
-          const rowStr = values.join(' ').toLowerCase();
-
-          // Ігноруємо технічні/заголовні рядки
-          if (
-            rowStr.includes('таблиця обліку') &&
-            (rowStr.includes('сертифікат') || rowStr.includes('документ') || rowStr.includes('свідоцтв'))
-          ) {
-            continue;
-          }
-          if (rowStr.includes('прізвище, ім') && rowStr.includes('структурного')) continue;
-
-          if (rowStr.includes(q)) {
-            const matchedCell = values.find((cell) => cell.toLowerCase().includes(q)) || q;
-            results.push({ file, matchedName: String(matchedCell), matchedRowData: row });
+        for (const cachedRow of data) {
+          if (cachedRow.searchStr.includes(q)) {
+            const matchedCell =
+              cachedRow.values.find((cell) => cell.toLowerCase().includes(q)) || q;
+            results.push({
+              file,
+              matchedName: matchedCell,
+              matchedRowData: cachedRow.raw,
+            });
           }
         }
       }

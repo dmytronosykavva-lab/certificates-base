@@ -1,3 +1,4 @@
+import { memo, useMemo } from 'react';
 import type { FC, ReactNode } from 'react';
 import type { SearchResult } from '../lib/DataEngine';
 
@@ -92,7 +93,6 @@ const parseCertificateRow = (item: SearchResult, index: number): ParsedCertifica
 
       const lowerKey = rawKey.toLowerCase().trim();
 
-      // Ігноруємо порядкові номери та технічні ключі
       if (
         lowerKey === '№' ||
         lowerKey.includes('№ з/п') ||
@@ -102,7 +102,6 @@ const parseCertificateRow = (item: SearchResult, index: number): ParsedCertifica
         continue;
       }
 
-      // Перевіряємо підписанта ПЕРЕД прізвищем, оскільки заголовок підписанта часто містить слово "прізвище"
       if (
         lowerKey.includes('яка підписала') ||
         lowerKey.includes('посада') ||
@@ -173,7 +172,6 @@ const parseCertificateRow = (item: SearchResult, index: number): ParsedCertifica
       extraFields.length > 0
   );
 
-  // Відкидаємо повністю порожні рядки, які не містять ні імені, ні документа, ні деталей
   if (!fullName && !cleanedMatchedName && !documentNumber && !hasDetails) {
     return null;
   }
@@ -194,15 +192,124 @@ const parseCertificateRow = (item: SearchResult, index: number): ParsedCertifica
   };
 };
 
+const fieldBoxClass =
+  'flex flex-col sm:flex-row items-start gap-1 sm:gap-2 p-2.5 rounded-md bg-white/90 hover:bg-white border border-slate-100 w-full h-auto break-words whitespace-normal transition-all duration-300';
+const labelClass =
+  'text-sm font-semibold text-primary break-words whitespace-normal w-full sm:w-auto';
+const valueClass =
+  'text-sm text-slate-700 break-words whitespace-normal w-full sm:flex-1';
+
+interface CertificateCardProps {
+  item: ParsedCertificate;
+  searchTerm: string;
+}
+
+const CertificateCard: FC<CertificateCardProps> = memo(({ item, searchTerm }) => {
+  // Fallback UI: суперкомпактна картка, якщо крім ПІБ немає жодних інших даних
+  if (!item.hasDetails) {
+    const displayTitle = item.fullName || item.matchedName;
+    if (!displayTitle) return null;
+
+    return (
+      <div className="w-full h-auto rounded-lg border border-slate-200 bg-slate-50/90 px-4 py-3 shadow-2xs hover:shadow-md hover:border-primary/30 transition-all duration-300 flex items-center">
+        <span className="inline-block max-w-full bg-accent/25 text-primary font-medium border border-accent/40 px-3 py-1 rounded-md text-xs sm:text-sm break-words whitespace-normal">
+          {highlightText(displayTitle, searchTerm)}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full h-auto rounded-lg border border-slate-200 bg-slate-50/90 p-4 sm:p-5 shadow-2xs hover:shadow-md hover:border-primary/30 transition-all duration-300 flex flex-col gap-3">
+      {item.matchedName && (
+        <div className="w-full h-auto">
+          <span className="inline-block max-w-full bg-accent/25 text-primary font-medium border border-accent/40 px-3 py-1 rounded-md text-xs break-words whitespace-normal transition-all duration-300">
+            {highlightText(item.matchedName, searchTerm)}
+          </span>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full h-auto items-start">
+        {item.fullName && (
+          <div className={fieldBoxClass}>
+            <span className={labelClass}>ПІБ:</span>
+            <span className={valueClass}>{highlightText(item.fullName, searchTerm)}</span>
+          </div>
+        )}
+
+        {item.department && (
+          <div className={fieldBoxClass}>
+            <span className={labelClass}>Підрозділ:</span>
+            <span className={valueClass}>{highlightText(item.department, searchTerm)}</span>
+          </div>
+        )}
+
+        {item.period && (
+          <div className={fieldBoxClass}>
+            <span className={labelClass}>Період навчання:</span>
+            <span className={valueClass}>{highlightText(item.period, searchTerm)}</span>
+          </div>
+        )}
+
+        {item.program && (
+          <div className={fieldBoxClass}>
+            <span className={labelClass}>Освітня програма / Кафедра:</span>
+            <span className={valueClass}>{highlightText(item.program, searchTerm)}</span>
+          </div>
+        )}
+
+        {item.volume && (
+          <div className={fieldBoxClass}>
+            <span className={labelClass}>Обсяг (години/кредити):</span>
+            <span className={valueClass}>{highlightText(item.volume, searchTerm)}</span>
+          </div>
+        )}
+
+        {item.topic && (
+          <div className={fieldBoxClass}>
+            <span className={labelClass}>Тема роботи:</span>
+            <span className={valueClass}>{highlightText(item.topic, searchTerm)}</span>
+          </div>
+        )}
+
+        {item.documentNumber && (
+          <div className={fieldBoxClass}>
+            <span className={labelClass}>Номер документа:</span>
+            <span className={valueClass}>{highlightText(item.documentNumber, searchTerm)}</span>
+          </div>
+        )}
+
+        {item.signatory && (
+          <div className={fieldBoxClass}>
+            <span className={labelClass}>Підписант:</span>
+            <span className={valueClass}>{highlightText(item.signatory, searchTerm)}</span>
+          </div>
+        )}
+
+        {item.extraFields.map((field) => (
+          <div key={field.key} className={fieldBoxClass}>
+            <span className={labelClass}>{field.label}:</span>
+            <span className={valueClass}>{highlightText(field.value, searchTerm)}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+});
+
+CertificateCard.displayName = 'CertificateCard';
+
 interface FilesTableProps {
   results: SearchResult[];
   searchTerm: string;
 }
 
-export const FilesTable: FC<FilesTableProps> = ({ results, searchTerm }) => {
-  const validItems = results
-    .map((item, idx) => parseCertificateRow(item, idx))
-    .filter((item): item is ParsedCertificate => item !== null);
+export const FilesTable: FC<FilesTableProps> = memo(({ results, searchTerm }) => {
+  const validItems = useMemo(() => {
+    return results
+      .map((item, idx) => parseCertificateRow(item, idx))
+      .filter((item): item is ParsedCertificate => item !== null);
+  }, [results]);
 
   if (validItems.length === 0) {
     return (
@@ -212,13 +319,6 @@ export const FilesTable: FC<FilesTableProps> = ({ results, searchTerm }) => {
     );
   }
 
-  const fieldBoxClass =
-    'flex flex-col sm:flex-row items-start gap-1 sm:gap-2 p-2.5 rounded-md bg-white/90 hover:bg-white border border-slate-100 w-full h-auto break-words whitespace-normal transition-all duration-300';
-  const labelClass =
-    'text-sm font-semibold text-primary break-words whitespace-normal w-full sm:w-auto';
-  const valueClass =
-    'text-sm text-slate-700 break-words whitespace-normal w-full sm:flex-1';
-
   return (
     <div className="w-full h-auto overflow-hidden bg-white/95 backdrop-blur-xs rounded-lg border border-primary/15 shadow-md transition-all duration-300">
       <div className="px-4 sm:px-6 py-4 text-xs uppercase bg-primary/5 border-b border-primary/15 text-primary font-bold tracking-wider">
@@ -226,123 +326,12 @@ export const FilesTable: FC<FilesTableProps> = ({ results, searchTerm }) => {
       </div>
 
       <div className="p-4 sm:p-6 flex flex-col gap-4 h-auto">
-        {validItems.map((item) => {
-          // Fallback UI: суперкомпактна картка, якщо крім ПІБ немає жодних інших даних
-          if (!item.hasDetails) {
-            const displayTitle = item.fullName || item.matchedName;
-            if (!displayTitle) return null;
-
-            return (
-              <div
-                key={item.id}
-                className="w-full h-auto rounded-lg border border-slate-200 bg-slate-50/90 px-4 py-3 shadow-2xs hover:shadow-md hover:border-primary/30 transition-all duration-300 flex items-center"
-              >
-                <span className="inline-block max-w-full bg-accent/25 text-primary font-medium border border-accent/40 px-3 py-1 rounded-md text-xs sm:text-sm break-words whitespace-normal">
-                  {highlightText(displayTitle, searchTerm)}
-                </span>
-              </div>
-            );
-          }
-
-          return (
-            <div
-              key={item.id}
-              className="w-full h-auto rounded-lg border border-slate-200 bg-slate-50/90 p-4 sm:p-5 shadow-2xs hover:shadow-md hover:border-primary/30 transition-all duration-300 flex flex-col gap-3"
-            >
-              {item.matchedName && (
-                <div className="w-full h-auto">
-                  <span className="inline-block max-w-full bg-accent/25 text-primary font-medium border border-accent/40 px-3 py-1 rounded-md text-xs break-words whitespace-normal transition-all duration-300">
-                    {highlightText(item.matchedName, searchTerm)}
-                  </span>
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full h-auto items-start">
-                {item.fullName && (
-                  <div className={fieldBoxClass}>
-                    <span className={labelClass}>ПІБ:</span>
-                    <span className={valueClass}>
-                      {highlightText(item.fullName, searchTerm)}
-                    </span>
-                  </div>
-                )}
-
-                {item.department && (
-                  <div className={fieldBoxClass}>
-                    <span className={labelClass}>Підрозділ:</span>
-                    <span className={valueClass}>
-                      {highlightText(item.department, searchTerm)}
-                    </span>
-                  </div>
-                )}
-
-                {item.period && (
-                  <div className={fieldBoxClass}>
-                    <span className={labelClass}>Період навчання:</span>
-                    <span className={valueClass}>
-                      {highlightText(item.period, searchTerm)}
-                    </span>
-                  </div>
-                )}
-
-                {item.program && (
-                  <div className={fieldBoxClass}>
-                    <span className={labelClass}>Освітня програма / Кафедра:</span>
-                    <span className={valueClass}>
-                      {highlightText(item.program, searchTerm)}
-                    </span>
-                  </div>
-                )}
-
-                {item.volume && (
-                  <div className={fieldBoxClass}>
-                    <span className={labelClass}>Обсяг (години/кредити):</span>
-                    <span className={valueClass}>
-                      {highlightText(item.volume, searchTerm)}
-                    </span>
-                  </div>
-                )}
-
-                {item.topic && (
-                  <div className={fieldBoxClass}>
-                    <span className={labelClass}>Тема роботи:</span>
-                    <span className={valueClass}>
-                      {highlightText(item.topic, searchTerm)}
-                    </span>
-                  </div>
-                )}
-
-                {item.documentNumber && (
-                  <div className={fieldBoxClass}>
-                    <span className={labelClass}>Номер документа:</span>
-                    <span className={valueClass}>
-                      {highlightText(item.documentNumber, searchTerm)}
-                    </span>
-                  </div>
-                )}
-
-                {item.signatory && (
-                  <div className={fieldBoxClass}>
-                    <span className={labelClass}>Підписант:</span>
-                    <span className={valueClass}>
-                      {highlightText(item.signatory, searchTerm)}
-                    </span>
-                  </div>
-                )}
-
-                {item.extraFields.map((field) => (
-                  <div key={field.key} className={fieldBoxClass}>
-                    <span className={labelClass}>{field.label}:</span>
-                    <span className={valueClass}>
-                      {highlightText(field.value, searchTerm)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          );
-        })}
+        {validItems.map((item) => (
+          <CertificateCard key={item.id} item={item} searchTerm={searchTerm} />
+        ))}
       </div>
     </div>
   );
-};
+});
+
+FilesTable.displayName = 'FilesTable';
