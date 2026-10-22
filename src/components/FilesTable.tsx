@@ -45,37 +45,39 @@ interface FilesTableProps {
 export const FilesTable: FC<FilesTableProps> = ({ results, searchTerm }) => {
   if (results.length === 0) {
     return (
-      <div className="text-center py-16 bg-white border border-gray-200 rounded-[7px]">
-        <p className="text-gray-500 text-lg">За вашим запитом нічого не знайдено.</p>
+      <div className="text-center py-16 bg-white/95 backdrop-blur-xs border border-slate-200 rounded-lg shadow-md transition-all duration-300">
+        <p className="text-slate-500 text-lg">За вашим запитом нічого не знайдено.</p>
       </div>
     );
   }
 
   return (
-    <div className="overflow-x-auto bg-white rounded-[7px] border border-gray-200">
-      <table className="w-full text-sm text-left text-gray-700">
-        <thead className="text-xs uppercase bg-gray-50 border-b border-gray-200 text-primary">
+    <div className="overflow-x-auto bg-white/95 backdrop-blur-xs rounded-lg border border-primary/15 shadow-md transition-all duration-300">
+      <table className="w-full text-sm text-left text-slate-700">
+        <thead className="text-xs uppercase bg-primary/5 border-b border-primary/15 text-primary">
           <tr>
-            <th scope="col" className="px-6 py-5 font-bold tracking-wider">Збіг у файлі</th>
+            <th scope="col" className="px-6 py-5 font-bold tracking-wider">
+              Збіг у файлі
+            </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-200">
+        <tbody className="divide-y divide-slate-200">
           {results.map(({ file, matchedName, matchedRowData }) => (
             <Fragment key={file.id}>
-              <tr className="bg-white hover:bg-gray-50/50 transition-colors">
+              <tr className="bg-white hover:bg-primary/[0.03] transition-all duration-300">
                 <td className="px-6 py-4">
                   {matchedName ? (
-                    <span className="inline-block bg-accent/20 text-yellow-800 px-2.5 py-1 rounded text-xs break-words">
+                    <span className="inline-block bg-accent/25 text-primary font-medium border border-accent/40 px-3 py-1 rounded-md text-xs break-words transition-all duration-300">
                       {highlightText(matchedName, searchTerm)}
                     </span>
                   ) : (
-                    <span className="text-gray-400 text-xs italic">-</span>
+                    <span className="text-slate-400 text-xs italic">-</span>
                   )}
                 </td>
               </tr>
               {matchedRowData && (
-                <tr>
-                  <td className="px-6 py-4 bg-gray-50 border-t border-gray-100">
+                <tr className="transition-all duration-300">
+                  <td className="px-6 py-5 bg-slate-50/90 border-t border-slate-100">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {Object.entries(matchedRowData).map(([key, value]) => {
                         if (value === null || value === undefined || value === '') return null;
@@ -86,9 +88,14 @@ export const FilesTable: FC<FilesTableProps> = ({ results, searchTerm }) => {
                         if (!formattedLabel) return null;
                         
                         return (
-                          <div key={key} className="flex items-start gap-2">
-                            <span className="text-sm font-semibold text-primary shrink-0">{formattedLabel}:</span>
-                            <span className="text-sm text-gray-700 break-words">
+                          <div
+                            key={key}
+                            className="flex items-start gap-2 p-2 rounded-md hover:bg-white/80 transition-all duration-300"
+                          >
+                            <span className="text-sm font-semibold text-primary shrink-0">
+                              {formattedLabel}:
+                            </span>
+                            <span className="text-sm text-slate-700 break-words">
                               {highlightText(strVal, searchTerm)}
                             </span>
                           </div>
@@ -105,4 +112,3 @@ export const FilesTable: FC<FilesTableProps> = ({ results, searchTerm }) => {
     </div>
   );
 };
-
