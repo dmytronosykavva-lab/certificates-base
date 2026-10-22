@@ -40,19 +40,23 @@ class DataEngine {
                 const wb = XLSX.read(buf, { type: 'array' });
                 const sheet = wb.Sheets[wb.SheetNames[0]];
 
-                // Динамічний пошук справжнього рядка заголовків таблиці
+                // Динамічний пошук справжнього рядка заголовків таблиці (має містити щонайменше 3 непорожні колонки)
                 const rawRows = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1 });
                 let headerIndex = -1;
-                for (let r = 0; r < Math.min(rawRows.length, 6); r++) {
+                for (let r = 0; r < Math.min(rawRows.length, 10); r++) {
                   const row = rawRows[r];
                   if (!Array.isArray(row)) continue;
-                  const str = row.join(' ').toLowerCase();
+                  const nonEmptyCells = row.filter(
+                    (cell) => cell !== null && cell !== undefined && String(cell).trim() !== ''
+                  );
+                  if (nonEmptyCells.length < 3) continue;
+
+                  const str = nonEmptyCells.join(' ').toLowerCase();
                   if (
                     str.includes('прізвище') ||
                     str.includes('піб') ||
-                    str.includes('слухач') ||
-                    str.includes('учител') ||
-                    str.includes('здобувач') ||
+                    str.includes('найменування структурного') ||
+                    str.includes('назва програми') ||
                     str.includes('№ з/п')
                   ) {
                     headerIndex = r;
@@ -61,12 +65,14 @@ class DataEngine {
                 }
 
                 if (headerIndex === -1) {
-                  let maxCols = 0;
-                  for (let r = 0; r < Math.min(rawRows.length, 5); r++) {
+                  for (let r = 0; r < Math.min(rawRows.length, 10); r++) {
                     const row = rawRows[r];
-                    if (Array.isArray(row) && row.filter(Boolean).length > maxCols) {
-                      maxCols = row.filter(Boolean).length;
+                    if (
+                      Array.isArray(row) &&
+                      row.filter((cell) => cell !== null && cell !== undefined && String(cell).trim() !== '').length >= 3
+                    ) {
                       headerIndex = r;
+                      break;
                     }
                   }
                 }
@@ -74,12 +80,19 @@ class DataEngine {
 
                 const rawJson = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { range: headerIndex });
 
-                // Відфільтровуємо заголовні/довідкові рядки, які випадково потрапили в дані
+                // Відфільтровуємо заголовні, технічні та порожні рядки
                 const json = rawJson.filter((row) => {
-                  const values = Object.values(row);
-                  if (values.length <= 1) return false;
+                  const values = Object.values(row)
+                    .map((v) => (v !== null && v !== undefined ? String(v).trim() : ''))
+                    .filter(Boolean);
+                  if (values.length === 0) return false;
                   const rowStr = values.join(' ').toLowerCase();
-                  if (rowStr.includes('таблиця обліку') && (rowStr.includes('сертифікат') || rowStr.includes('документ') || rowStr.includes('свідоцтв'))) return false;
+                  if (
+                    rowStr.includes('таблиця обліку') &&
+                    (rowStr.includes('сертифікат') || rowStr.includes('документ') || rowStr.includes('свідоцтв'))
+                  ) {
+                    return false;
+                  }
                   if (rowStr.includes('прізвище, ім') && rowStr.includes('структурного')) return false;
                   return true;
                 });
@@ -111,38 +124,32 @@ class DataEngine {
     const results: SearchResult[] = [];
 
     for (const file of this.files) {
-      // Apply filters first to skip searching inside files that don't match
       if (selectedYear && file.year !== selectedYear) continue;
       if (selectedDate && file.date !== selectedDate) continue;
 
       const data = this.fileCache.get(file.id);
       if (data) {
-        let found = false;
         for (const row of data) {
-          const values = Object.values(row);
+          const values = Object.values(row)
+            .map((v) => (v !== null && v !== undefined ? String(v).trim() : ''))
+            .filter(Boolean);
+          if (values.length === 0) continue;
+
           const rowStr = values.join(' ').toLowerCase();
 
           // Ігноруємо технічні/заголовні рядки
-          if (rowStr.includes('таблиця обліку') && (rowStr.includes('сертифікат') || rowStr.includes('документ') || rowStr.includes('свідоцтв'))) continue;
+          if (
+            rowStr.includes('таблиця обліку') &&
+            (rowStr.includes('сертифікат') || rowStr.includes('документ') || rowStr.includes('свідоцтв'))
+          ) {
+            continue;
+          }
           if (rowStr.includes('прізвище, ім') && rowStr.includes('структурного')) continue;
 
           if (rowStr.includes(q)) {
-            // Find the exact cell that matched for better display
-            const matchedCell = values.find(cell => String(cell).toLowerCase().includes(q)) || q;
+            const matchedCell = values.find((cell) => cell.toLowerCase().includes(q)) || q;
             results.push({ file, matchedName: String(matchedCell), matchedRowData: row });
-            found = true;
-            break; // One match per file is enough for a file registry
           }
-        }
-        
-        // Also fallback to search in file title if not found inside
-        if (!found && file.title.toLowerCase().includes(q)) {
-          results.push({ file, matchedName: 'Збіг у назві файлу' });
-        }
-      } else {
-        // If file is not yet cached but matches title, return it anyway
-        if (file.title.toLowerCase().includes(q)) {
-          results.push({ file, matchedName: 'Збіг у назві файлу (вміст завантажується)' });
         }
       }
     }
