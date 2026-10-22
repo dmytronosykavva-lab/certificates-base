@@ -39,7 +39,51 @@ class DataEngine {
                 const buf = await res.arrayBuffer();
                 const wb = XLSX.read(buf, { type: 'array' });
                 const sheet = wb.Sheets[wb.SheetNames[0]];
-                const json = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { range: 1 });
+
+                // Динамічний пошук справжнього рядка заголовків таблиці
+                const rawRows = XLSX.utils.sheet_to_json<unknown[]>(sheet, { header: 1 });
+                let headerIndex = -1;
+                for (let r = 0; r < Math.min(rawRows.length, 6); r++) {
+                  const row = rawRows[r];
+                  if (!Array.isArray(row)) continue;
+                  const str = row.join(' ').toLowerCase();
+                  if (
+                    str.includes('прізвище') ||
+                    str.includes('піб') ||
+                    str.includes('слухач') ||
+                    str.includes('учител') ||
+                    str.includes('здобувач') ||
+                    str.includes('№ з/п')
+                  ) {
+                    headerIndex = r;
+                    break;
+                  }
+                }
+
+                if (headerIndex === -1) {
+                  let maxCols = 0;
+                  for (let r = 0; r < Math.min(rawRows.length, 5); r++) {
+                    const row = rawRows[r];
+                    if (Array.isArray(row) && row.filter(Boolean).length > maxCols) {
+                      maxCols = row.filter(Boolean).length;
+                      headerIndex = r;
+                    }
+                  }
+                }
+                if (headerIndex === -1) headerIndex = 1;
+
+                const rawJson = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { range: headerIndex });
+
+                // Відфільтровуємо заголовні/довідкові рядки, які випадково потрапили в дані
+                const json = rawJson.filter((row) => {
+                  const values = Object.values(row);
+                  if (values.length <= 1) return false;
+                  const rowStr = values.join(' ').toLowerCase();
+                  if (rowStr.includes('таблиця обліку') && (rowStr.includes('сертифікат') || rowStr.includes('документ') || rowStr.includes('свідоцтв'))) return false;
+                  if (rowStr.includes('прізвище, ім') && rowStr.includes('структурного')) return false;
+                  return true;
+                });
+
                 this.fileCache.set(file.id, json);
               }
             }
@@ -77,6 +121,11 @@ class DataEngine {
         for (const row of data) {
           const values = Object.values(row);
           const rowStr = values.join(' ').toLowerCase();
+
+          // Ігноруємо технічні/заголовні рядки
+          if (rowStr.includes('таблиця обліку') && (rowStr.includes('сертифікат') || rowStr.includes('документ') || rowStr.includes('свідоцтв'))) continue;
+          if (rowStr.includes('прізвище, ім') && rowStr.includes('структурного')) continue;
+
           if (rowStr.includes(q)) {
             // Find the exact cell that matched for better display
             const matchedCell = values.find(cell => String(cell).toLowerCase().includes(q)) || q;

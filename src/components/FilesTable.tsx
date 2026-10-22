@@ -24,6 +24,8 @@ const formatColumnName = (key: string): string | null => {
   const lowerKey = key.toLowerCase();
   
   if (lowerKey.includes('№ з/п') || lowerKey === '№') return null;
+  if (lowerKey.startsWith('__empty')) return null;
+  if (lowerKey.includes('таблиця обліку')) return null;
 
   if (lowerKey.includes('прізвище')) return 'ПІБ';
   if (lowerKey.includes('найменування структурного')) return 'Підрозділ';
@@ -62,7 +64,25 @@ export const FilesTable: FC<FilesTableProps> = ({ results, searchTerm }) => {
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-200">
-          {results.map(({ file, matchedName, matchedRowData }) => (
+          {results
+            .filter(({ matchedName, matchedRowData }) => {
+              const nameLower = matchedName.toLowerCase();
+              if (nameLower.includes('таблиця обліку')) return false;
+              if (matchedRowData) {
+                const valuesStr = Object.values(matchedRowData).join(' ').toLowerCase();
+                if (
+                  valuesStr.includes('таблиця обліку') &&
+                  (valuesStr.includes('сертифікат') || valuesStr.includes('вчителям') || valuesStr.includes('документ'))
+                ) {
+                  return false;
+                }
+                if (valuesStr.includes('структурного підрозділу') && valuesStr.includes('терміни')) {
+                  return false;
+                }
+              }
+              return true;
+            })
+            .map(({ file, matchedName, matchedRowData }) => (
             <Fragment key={file.id}>
               <tr className="bg-white hover:bg-primary/[0.03] transition-all duration-300">
                 <td className="px-6 py-4">
