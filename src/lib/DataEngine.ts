@@ -60,18 +60,16 @@ class DataEngine {
 
   search(query: string, selectedYear: string, selectedDate: string): SearchResult[] {
     const q = query.toLowerCase().trim();
+    if (!q) {
+      return [];
+    }
+
     const results: SearchResult[] = [];
 
     for (const file of this.files) {
       // Apply filters first to skip searching inside files that don't match
       if (selectedYear && file.year !== selectedYear) continue;
       if (selectedDate && file.date !== selectedDate) continue;
-
-      if (!q) {
-        // If no query, just return the file as a match (so default list works)
-        results.push({ file, matchedName: '' });
-        continue;
-      }
 
       const data = this.fileCache.get(file.id);
       if (data) {

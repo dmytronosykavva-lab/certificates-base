@@ -101,7 +101,9 @@ function App() {
               />
             </div>
 
-            <FilesTable results={searchResults} />
+            {searchTerm.trim() !== '' && (
+              <FilesTable results={searchResults} searchTerm={searchTerm} />
+            )}
           </div>
         )}
       </main>
