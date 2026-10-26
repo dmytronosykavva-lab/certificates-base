@@ -17,6 +17,42 @@ body {
   overflow-x: hidden;
 }
 
+@keyframes marquee {
+  0% {
+    transform: translate3d(0%, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 28s linear infinite;
+  will-change: transform;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* Мінімалістична плавна анімація тонкої сітки сузір'їв у шапці */
+@keyframes headerTechParallax {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(-90px, -8px, 0);
+  }
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.animate-header-parallax {
+  animation: headerTechParallax 42s ease-in-out infinite;
+  will-change: transform;
+}
+
 @keyframes neuralDrift {
   0% {
     transform: translate3d(0, 0, 0) scale(1);
