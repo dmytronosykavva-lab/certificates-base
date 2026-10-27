@@ -19,10 +19,10 @@ body {
 
 @keyframes marquee {
   0% {
-    transform: translate3d(0%, 0, 0);
+    transform: translateX(0%);
   }
   100% {
-    transform: translate3d(-50%, 0, 0);
+    transform: translateX(-100%);
   }
 }
 
@@ -31,7 +31,7 @@ body {
   will-change: transform;
 }
 
-.animate-marquee:hover {
+.header-marquee-wrapper:hover .animate-marquee {
   animation-play-state: paused;
 }
 

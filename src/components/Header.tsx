@@ -1,28 +1,33 @@
 import { memo } from 'react';
 import type { FC } from 'react';
 
-const MarqueeBlock: FC = () => (
-  <div className="flex items-center gap-16 px-8 shrink-0">
+/**
+ * Повний парний набір контенту: [Університет] + [Інститут].
+ * Усі елементи та зображення мають shrink-0 і max-w-none, щоб мобільні браузери
+ * ніколи не стискали картинки і не спотворювали розрахунок ширини треку.
+ */
+const MarqueePair: FC = () => (
+  <>
     {/* Частина 1: Каразінський університет */}
-    <div className="flex items-center gap-4">
+    <div className="flex flex-row flex-nowrap items-center gap-4 shrink-0 whitespace-nowrap">
       <img
         src="/logoofuniversity.jpg"
         alt="karazin"
-        className="h-24 w-auto object-contain shrink-0"
+        className="h-24 w-auto max-w-none object-contain shrink-0 select-none"
       />
-      <div className="flex flex-col justify-center items-start">
-        <span className="text-2xl sm:text-[26px] font-bold font-heading tracking-wider text-[#EBCA88] uppercase leading-tight">
+      <div className="flex flex-col justify-center items-start shrink-0 whitespace-nowrap">
+        <span className="text-2xl sm:text-[26px] font-bold font-heading tracking-wider text-[#EBCA88] uppercase leading-tight whitespace-nowrap">
           КАРАЗІНСЬКИЙ УНІВЕРСИТЕТ
         </span>
-        <span className="text-sm sm:text-[15px] font-light italic text-[#EBCA88] tracking-widest mt-1.5">
+        <span className="text-sm sm:text-[15px] font-light italic text-[#EBCA88] tracking-widest mt-1.5 whitespace-nowrap">
           КЛАСИКА, ЩО ВИПЕРЕДЖАЄ ЧАС
         </span>
       </div>
     </div>
 
     {/* Частина 2: Інститут */}
-    <div className="flex items-center gap-4">
-      {/* Пропорційно вирівняний щит інституту: видима частина щита (~68.5% висоти PNG) у h-32 (128px) зі зсувом translate-y-3.5 (14px) точно збігається за висотою (~88-90px) і вертикальною віссю з гербом університету (h-24) */}
+    <div className="flex flex-row flex-nowrap items-center gap-4 shrink-0 whitespace-nowrap">
+      {/* Пропорційно вирівняний щит інституту */}
       <div className="h-24 w-24 flex items-center justify-center shrink-0">
         <img
           src="/logogold_2.png"
@@ -30,38 +35,54 @@ const MarqueeBlock: FC = () => (
           className="h-32 w-auto max-w-none object-contain translate-y-3.5 shrink-0 pointer-events-none select-none"
         />
       </div>
-      <div className="flex flex-col items-center justify-center">
+      <div className="flex flex-col items-center justify-center shrink-0">
         <img
           src="/motto-text.png"
           alt="educatio perpetua"
-          className="h-3.5 w-auto object-contain"
+          className="h-3.5 w-auto max-w-none object-contain shrink-0 select-none"
         />
         <img
           src="/motto-line.png"
           alt="line"
-          className="h-[2px] w-auto my-1 object-contain"
+          className="h-[2px] w-auto max-w-none my-1 object-contain shrink-0 select-none"
         />
         <img
           src="/title-line1.png"
           alt="інститут безперервної освіти"
-          className="h-5 w-auto object-contain"
+          className="h-5 w-auto max-w-none object-contain shrink-0 select-none"
         />
         <img
           src="/title-line2.png"
           alt="та інноваційного розвитку"
-          className="h-5 w-auto mt-1 object-contain"
+          className="h-5 w-auto max-w-none mt-1 object-contain shrink-0 select-none"
         />
       </div>
     </div>
+  </>
+);
+
+/**
+ * Один із двох абсолютно ідентичних паралельних треків каруселі.
+ * Завдяки симетричним відступам (gap-12 px-6 на мобільних / gap-16 px-8 на десктопах)
+ * стик між Першим і Другим треком дорівнює внутрішньому gap між блоками,
+ * а translateX(-100%) зсуває кожен трек рівно на 100% його власної ширини без ривків.
+ */
+const MarqueeTrack: FC<{ ariaHidden?: boolean }> = ({ ariaHidden = false }) => (
+  <div
+    aria-hidden={ariaHidden || undefined}
+    className="flex flex-row flex-nowrap shrink-0 items-center justify-around min-w-full gap-12 sm:gap-16 px-6 sm:px-8 whitespace-nowrap animate-marquee"
+  >
+    <MarqueePair />
+    <MarqueePair />
   </div>
 );
 
 export const Header: FC = memo(() => {
   return (
     <header className="relative z-10 w-full mb-8">
-      {/* Головний обгортковий контейнер нескінченної каруселі на строго темно-синьому фоні #002b5c */}
-      <div className="w-full overflow-hidden bg-[#002b5c] py-4 relative shadow-md">
-        {/* Мінімалістичний делікатний фоновий патерн без засвітів, строго поверх #002b5c */}
+      {/* Головний контейнер шапки: relative flex overflow-hidden bg-[#002b5c] w-full py-4 */}
+      <div className="header-marquee-wrapper relative flex overflow-hidden bg-[#002b5c] w-full py-4 shadow-md">
+        {/* Мінімалістичний делікатний фоновий патерн на z-0 поверх строгого #002b5c */}
         <div
           className="absolute inset-0 z-0 pointer-events-none overflow-hidden"
           aria-hidden="true"
@@ -101,12 +122,10 @@ export const Header: FC = memo(() => {
           </svg>
         </div>
 
-        {/* Трек для безперервного руху вліво */}
-        <div className="relative z-10 flex whitespace-nowrap w-max animate-marquee">
-          <MarqueeBlock />
-          <MarqueeBlock />
-          <MarqueeBlock />
-          <MarqueeBlock />
+        {/* Контейнер для каруселі (z-10 flex w-max) з ДВОМА абсолютно ідентичними треками */}
+        <div className="relative z-10 flex flex-nowrap w-max">
+          <MarqueeTrack />
+          <MarqueeTrack ariaHidden />
         </div>
       </div>
 
