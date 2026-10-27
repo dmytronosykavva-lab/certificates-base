@@ -1,94 +1,19 @@
 import { memo } from 'react';
 import type { FC } from 'react';
 
-/**
- * Повний парний набір контенту: [Університет] + [Інститут].
- * Усі елементи та зображення мають shrink-0 і max-w-none, щоб мобільні браузери
- * ніколи не стискали картинки і не спотворювали розрахунок ширини треку.
- */
-const MarqueePair: FC = () => (
-  <>
-    {/* Частина 1: Каразінський університет */}
-    <div className="flex flex-row flex-nowrap items-center gap-4 shrink-0 whitespace-nowrap">
-      <img
-        src="/logoofuniversity.jpg"
-        alt="karazin"
-        className="h-24 w-auto max-w-none object-contain shrink-0 select-none"
-      />
-      <div className="flex flex-col justify-center items-start shrink-0 whitespace-nowrap">
-        <span className="text-2xl sm:text-[26px] font-bold font-heading tracking-wider text-[#EBCA88] uppercase leading-tight whitespace-nowrap">
-          КАРАЗІНСЬКИЙ УНІВЕРСИТЕТ
-        </span>
-        <span className="text-sm sm:text-[15px] font-light italic text-[#EBCA88] tracking-widest mt-1.5 whitespace-nowrap">
-          КЛАСИКА, ЩО ВИПЕРЕДЖАЄ ЧАС
-        </span>
-      </div>
-    </div>
-
-    {/* Частина 2: Інститут */}
-    <div className="flex flex-row flex-nowrap items-center gap-4 shrink-0 whitespace-nowrap">
-      {/* Пропорційно вирівняний щит інституту */}
-      <div className="h-24 w-24 flex items-center justify-center shrink-0">
-        <img
-          src="/logogold_2.png"
-          alt="shield"
-          className="h-32 w-auto max-w-none object-contain translate-y-3.5 shrink-0 pointer-events-none select-none"
-        />
-      </div>
-      <div className="flex flex-col items-center justify-center shrink-0">
-        <img
-          src="/motto-text.png"
-          alt="educatio perpetua"
-          className="h-3.5 w-auto max-w-none object-contain shrink-0 select-none"
-        />
-        <img
-          src="/motto-line.png"
-          alt="line"
-          className="h-[2px] w-auto max-w-none my-1 object-contain shrink-0 select-none"
-        />
-        <img
-          src="/title-line1.png"
-          alt="інститут безперервної освіти"
-          className="h-5 w-auto max-w-none object-contain shrink-0 select-none"
-        />
-        <img
-          src="/title-line2.png"
-          alt="та інноваційного розвитку"
-          className="h-5 w-auto max-w-none mt-1 object-contain shrink-0 select-none"
-        />
-      </div>
-    </div>
-  </>
-);
-
-/**
- * Один із двох абсолютно ідентичних паралельних треків каруселі.
- * Завдяки симетричним відступам (gap-12 px-6 на мобільних / gap-16 px-8 на десктопах)
- * стик між Першим і Другим треком дорівнює внутрішньому gap між блоками,
- * а translateX(-100%) зсуває кожен трек рівно на 100% його власної ширини без ривків.
- */
-const MarqueeTrack: FC<{ ariaHidden?: boolean }> = ({ ariaHidden = false }) => (
-  <div
-    aria-hidden={ariaHidden || undefined}
-    className="flex flex-row flex-nowrap shrink-0 items-center justify-around min-w-full gap-12 sm:gap-16 px-6 sm:px-8 whitespace-nowrap animate-marquee"
-  >
-    <MarqueePair />
-    <MarqueePair />
-  </div>
-);
-
 export const Header: FC = memo(() => {
   return (
     <header className="relative z-10 w-full mb-8">
-      {/* Головний контейнер шапки: relative flex overflow-hidden bg-[#002b5c] w-full py-4 */}
-      <div className="header-marquee-wrapper relative flex overflow-hidden bg-[#002b5c] w-full py-4 shadow-md">
-        {/* Мінімалістичний делікатний фоновий патерн на z-0 поверх строгого #002b5c */}
+      {/* Головна темно-синя шапка зі статичним адаптивним контентом та живим фоном */}
+      <div className="relative w-full overflow-hidden bg-[#002b5c] py-5 shadow-md">
+        {/* === ФОНОВИЙ ШАР (z-0): сітка сузір'їв, делікатні частинки та хвилі на строгому #002b5c === */}
         <div
           className="absolute inset-0 z-0 pointer-events-none overflow-hidden"
           aria-hidden="true"
         >
+          {/* Рухома технологічна сітка сузір'їв */}
           <svg
-            className="absolute -left-24 -top-6 w-[130%] h-[140%] opacity-[0.08] animate-header-parallax"
+            className="absolute -left-24 -top-6 w-[130%] h-[140%] opacity-[0.09] animate-header-parallax"
             xmlns="http://www.w3.org/2000/svg"
           >
             <defs>
@@ -120,16 +45,76 @@ export const Header: FC = memo(() => {
             </defs>
             <rect width="100%" height="100%" fill="url(#header-minimal-constellation)" />
           </svg>
+
+          {/* Делікатні геометричні частинки та імпульси */}
+          <div className="absolute top-3 left-[18%] w-3 h-3 bg-[#ebca88]/15 border border-[#ebca88]/30 rotate-45 animate-header-particle" />
+          <div
+            className="absolute bottom-3 left-[46%] w-24 h-[1.5px] rounded-full bg-gradient-to-r from-transparent via-[#ebca88]/35 to-transparent animate-header-wave"
+          />
+          <div
+            className="absolute top-4 right-[22%] w-3.5 h-3.5 rounded-full bg-blue-300/10 border border-blue-300/25 animate-header-particle"
+            style={{ animationDelay: '-5s' }}
+          />
         </div>
 
-        {/* Контейнер для каруселі (z-10 flex w-max) з ДВОМА абсолютно ідентичними треками */}
-        <div className="relative z-10 flex flex-nowrap w-max">
-          <MarqueeTrack />
-          <MarqueeTrack ariaHidden />
+        {/* === ГОЛОВНИЙ КОНТЕНТ ШАПКИ (z-10): без каруселі, адаптивна статика === */}
+        <div className="relative z-10 flex flex-col xl:flex-row justify-between items-center w-full px-4 md:px-8 gap-8">
+          {/* Лівий блок: Каразінський університет */}
+          <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
+            <img
+              src="/logoofuniversity.jpg"
+              alt="karazin"
+              className="h-24 w-auto object-contain shrink-0 select-none"
+            />
+            <div className="flex flex-col justify-center items-center sm:items-start">
+              <span className="text-xl sm:text-2xl md:text-[26px] font-bold font-heading tracking-wider text-[#EBCA88] uppercase leading-tight">
+                КАРАЗІНСЬКИЙ УНІВЕРСИТЕТ
+              </span>
+              <span className="text-xs sm:text-sm md:text-[15px] font-light italic text-[#EBCA88] tracking-widest mt-1.5">
+                КЛАСИКА, ЩО ВИПЕРЕДЖАЄ ЧАС
+              </span>
+            </div>
+          </div>
+
+          {/* Правий блок: Інститут безперервної освіти та інноваційного розвитку */}
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            {/* Пропорційно вирівняний щит інституту (візуально дорівнює гербу університету h-24) */}
+            <div className="h-24 w-24 flex items-center justify-center shrink-0">
+              <img
+                src="/logogold_2.png"
+                alt="shield"
+                className="h-32 w-auto max-w-none object-contain translate-y-3.5 shrink-0 pointer-events-none select-none"
+              />
+            </div>
+
+            {/* Ідеально відцентрована по осі стопка з 4-х картинок інституту */}
+            <div className="flex flex-col items-center justify-center">
+              <img
+                src="/motto-text.png"
+                alt="educatio perpetua"
+                className="h-3 sm:h-3.5 w-auto object-contain select-none"
+              />
+              <img
+                src="/motto-line.png"
+                alt="line"
+                className="h-[2px] w-auto my-1 object-contain select-none"
+              />
+              <img
+                src="/title-line1.png"
+                alt="інститут безперервної освіти"
+                className="h-4 sm:h-5 w-auto object-contain select-none"
+              />
+              <img
+                src="/title-line2.png"
+                alt="та інноваційного розвитку"
+                className="h-4 sm:h-5 w-auto mt-1 object-contain select-none"
+              />
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Головний заголовок сторінки поза каруселлю на світлому фоні */}
+      {/* Головний заголовок сторінки під темно-синьою шапкою на світлому фоні */}
       <div className="w-full bg-white/85 backdrop-blur-md border-b border-primary/10 py-6 shadow-2xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center sm:text-left">
           <h1 className="text-2xl sm:text-3xl font-bold font-heading text-primary mb-2">

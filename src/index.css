@@ -17,25 +17,7 @@ body {
   overflow-x: hidden;
 }
 
-@keyframes marquee {
-  0% {
-    transform: translateX(0%);
-  }
-  100% {
-    transform: translateX(-100%);
-  }
-}
-
-.animate-marquee {
-  animation: marquee 28s linear infinite;
-  will-change: transform;
-}
-
-.header-marquee-wrapper:hover .animate-marquee {
-  animation-play-state: paused;
-}
-
-/* Мінімалістична плавна анімація тонкої сітки сузір'їв у шапці */
+/* Анімації живого інноваційного фону шапки (Header z-0) */
 @keyframes headerTechParallax {
   0% {
     transform: translate3d(0, 0, 0);
@@ -48,9 +30,41 @@ body {
   }
 }
 
+@keyframes headerParticleDrift {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) rotate(45deg);
+    opacity: 0.15;
+  }
+  50% {
+    transform: translate3d(24px, -14px, 0) rotate(90deg);
+    opacity: 0.35;
+  }
+}
+
+@keyframes headerWavePulse {
+  0%, 100% {
+    transform: translateX(-15%) scaleX(0.9);
+    opacity: 0.12;
+  }
+  50% {
+    transform: translateX(15%) scaleX(1.1);
+    opacity: 0.3;
+  }
+}
+
 .animate-header-parallax {
   animation: headerTechParallax 42s ease-in-out infinite;
   will-change: transform;
+}
+
+.animate-header-particle {
+  animation: headerParticleDrift 12s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.animate-header-wave {
+  animation: headerWavePulse 11s ease-in-out infinite;
+  will-change: transform, opacity;
 }
 
 @keyframes neuralDrift {
