@@ -4,8 +4,8 @@ import type { FC } from 'react';
 export const Header: FC = memo(() => {
   return (
     <header className="relative z-10 w-full mb-8">
-      {/* Головна темно-синя шапка зі статичним адаптивним контентом та живим фоном */}
-      <div className="relative w-full overflow-hidden bg-[#002b5c] py-5 shadow-md">
+      {/* Головна темно-синя шапка з центральною симетричною композицією та живим фоном */}
+      <div className="relative w-full overflow-hidden bg-[#002b5c] xl:py-5 shadow-md">
         {/* === ФОНОВИЙ ШАР (z-0): сітка сузір'їв, делікатні частинки та хвилі на строгому #002b5c === */}
         <div
           className="absolute inset-0 z-0 pointer-events-none overflow-hidden"
@@ -57,59 +57,44 @@ export const Header: FC = memo(() => {
           />
         </div>
 
-        {/* === ГОЛОВНИЙ КОНТЕНТ ШАПКИ (z-10): без каруселі, адаптивна статика === */}
-        <div className="relative z-10 flex flex-col xl:flex-row justify-between items-center w-full px-4 md:px-8 gap-8">
-          {/* Лівий блок: Каразінський університет */}
-          <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
+        {/* === ГОЛОВНИЙ КОНТЕНТ ШАПКИ (z-10): mobile-first стек (< xl) та симетричний ряд (xl+) === */}
+        <div className="relative z-10 flex flex-col xl:flex-row justify-center items-center w-full px-4 gap-8 xl:gap-16 py-6 xl:py-0">
+          {/* Елемент 1 (зліва на xl / зверху на мобільних): Герб Каразіна */}
+          <img
+            src="/logoofuniversity.jpg"
+            alt="karazin"
+            className="h-24 w-auto object-contain shrink-0 select-none"
+          />
+
+          {/* Елемент 2 (по центру): Текстовий стек */}
+          <div className="flex flex-col items-center justify-center text-center max-w-full">
+            <span className="text-[#EBCA88] text-xl md:text-2xl xl:text-3xl font-semibold font-heading tracking-wider uppercase leading-tight mb-1.5">
+              Каразінський університет
+            </span>
             <img
-              src="/logoofuniversity.jpg"
-              alt="karazin"
-              className="h-24 w-auto object-contain shrink-0 select-none"
+              src="/motto-line.png"
+              alt="line"
+              className="h-[2px] w-auto max-w-[85vw] my-1.5 object-contain select-none"
             />
-            <div className="flex flex-col justify-center items-center sm:items-start">
-              <span className="text-xl sm:text-2xl md:text-[26px] font-bold font-heading tracking-wider text-[#EBCA88] uppercase leading-tight">
-                КАРАЗІНСЬКИЙ УНІВЕРСИТЕТ
-              </span>
-              <span className="text-xs sm:text-sm md:text-[15px] font-light italic text-[#EBCA88] tracking-widest mt-1.5">
-                КЛАСИКА, ЩО ВИПЕРЕДЖАЄ ЧАС
-              </span>
-            </div>
+            <img
+              src="/title-line1.png"
+              alt="інститут"
+              className="h-4 sm:h-5 md:h-6 xl:h-[26px] w-auto max-w-[92vw] object-contain select-none"
+            />
+            <img
+              src="/title-line2.png"
+              alt="інноваційного"
+              className="h-4 sm:h-5 md:h-6 xl:h-[26px] w-auto max-w-[88vw] mt-1.5 object-contain select-none"
+            />
           </div>
 
-          {/* Правий блок: Інститут безперервної освіти та інноваційного розвитку */}
-          <div className="flex flex-col sm:flex-row items-center gap-4">
-            {/* Пропорційно вирівняний щит інституту (візуально дорівнює гербу університету h-24) */}
-            <div className="h-24 w-24 flex items-center justify-center shrink-0">
-              <img
-                src="/logogold_2.png"
-                alt="shield"
-                className="h-32 w-auto max-w-none object-contain translate-y-3.5 shrink-0 pointer-events-none select-none"
-              />
-            </div>
-
-            {/* Ідеально відцентрована по осі стопка з 4-х картинок інституту */}
-            <div className="flex flex-col items-center justify-center">
-              <img
-                src="/motto-text.png"
-                alt="educatio perpetua"
-                className="h-3 sm:h-3.5 w-auto object-contain select-none"
-              />
-              <img
-                src="/motto-line.png"
-                alt="line"
-                className="h-[2px] w-auto my-1 object-contain select-none"
-              />
-              <img
-                src="/title-line1.png"
-                alt="інститут безперервної освіти"
-                className="h-4 sm:h-5 w-auto object-contain select-none"
-              />
-              <img
-                src="/title-line2.png"
-                alt="та інноваційного розвитку"
-                className="h-4 sm:h-5 w-auto mt-1 object-contain select-none"
-              />
-            </div>
+          {/* Елемент 3 (справа на xl / знизу на мобільних): Щит інституту */}
+          <div className="h-24 w-24 flex items-center justify-center shrink-0">
+            <img
+              src="/logogold_2.png"
+              alt="shield"
+              className="h-32 w-auto max-w-none object-contain translate-y-3.5 shrink-0 pointer-events-none select-none"
+            />
           </div>
         </div>
       </div>
